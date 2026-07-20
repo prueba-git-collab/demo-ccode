@@ -87,8 +87,17 @@ def _roles_de_cabecera(cols: list[str]) -> dict[str, int]:
 DESCARTES: list[dict] = []
 
 
+BASE = Path(__file__).resolve().parent.parent
+
+
 def _descartar(path: Path, nlinea: int, motivo: str) -> None:
-    DESCARTES.append({"origen": str(path), "linea": nlinea, "motivo": motivo})
+    # Ruta relativa a la raiz del proyecto: el artefacto vive dentro, y asi no
+    # arrastra la ruta del equipo donde se ejecuto.
+    try:
+        origen = str(Path(path).resolve().relative_to(BASE))
+    except ValueError:
+        origen = str(path)
+    DESCARTES.append({"origen": origen, "linea": nlinea, "motivo": motivo})
 
 
 def parsear_banco_csv(path: Path) -> list[Registro]:
