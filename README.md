@@ -1,4 +1,12 @@
-# Claude Code — guía de equipo
+```
+   ________                __        ______          __
+  / ____/ /___ ___  ______/ /__     / ____/___  ____/ /__
+ / /   / / __ `/ / / / __  / _ \   / /   / __ \/ __  / _ \
+/ /___/ / /_/ / /_/ / /_/ /  __/  / /___/ /_/ / /_/ /  __/
+\____/_/\__,_/\__,_/\__,_/\___/   \____/\____/\__,_/\___/
+
+                     g u i a   d e   e q u i p o
+```
 
 Material de la sesión: la presentación y el proyecto que se construye en vivo.
 
@@ -80,24 +88,38 @@ sistema no tiene estas librerías.
 
 ### Ejecutarlo
 
-Con Claude Code abierto en la carpeta del proyecto:
+Son dos pasos, ambos desde Claude Code abierto en la carpeta del proyecto.
+
+**1. Traer los documentos del correo.** En lenguaje natural, sin comandos:
+
+```
+trae del correo las facturas con asunto FACTURA DEMO a data/entrada/
+```
+
+Claude reconoce que eso lo resuelve la herramienta `traer_facturas` del MCP
+`gmail-facturas`, la llama y deja los adjuntos en `data/entrada/`, junto a los
+documentos que ya vienen en el repo.
+
+Este paso necesita las credenciales de Google (ver más abajo). Sin ellas se
+salta: el lote del repo ya trae 27 documentos con los que probar.
+
+**2. Procesar el lote:**
 
 ```
 /procesar
 ```
 
-Ese comando encadena el proceso entero: normaliza, lanza los dos subagentes en
-paralelo, genera el informe y resume el resultado.
+Ese comando encadena el proceso entero: normaliza los documentos, lanza los
+subagentes `clasificador` y `auditor` **en paralelo**, genera el informe y
+cierra con un resumen. Si una fase falla, se detiene y lo dice.
 
-Paso a paso, sin Claude Code:
+Por el camino se ven trabajar los hooks: validan cada artefacto que se escribe,
+comprueban que ningún registro se quede sin procesar y bloquean la escritura si
+detectan un IBAN o un DNI en claro.
 
-```bash
-.venv/bin/python src/normalizar.py   # documentos -> data/salida/normalizado.json
-.venv/bin/python src/informe.py      # -> data/salida/informe.md
-```
-
-La clasificación y la auditoría las hacen los subagentes, así que por esta vía
-el informe sale con esas secciones vacías, y lo avisa.
+Los scripts de `src/` también se pueden lanzar sueltos con
+`.venv/bin/python src/normalizar.py`, pero entonces solo corre la parte
+determinista: sin clasificación ni auditoría, y el informe lo advierte.
 
 ### Qué se genera
 
@@ -114,14 +136,21 @@ Todo en `data/salida/`, y se puede borrar entero: se reconstruye.
 
 ### El MCP de Gmail
 
-`mcp_gmail/` es un servidor MCP propio que descarga adjuntos del correo a
-`data/entrada/`. Es opcional: el proyecto funciona con los documentos que ya
-vienen en el repo.
+`mcp_gmail/` es un servidor MCP propio que expone la herramienta
+`traer_facturas(asunto)`: busca los correos que coinciden con ese asunto,
+descarga sus adjuntos y los deja en `data/entrada/`. Solo pide permiso de
+lectura sobre el buzón.
 
-Para usarlo hacen falta credenciales de Google Cloud propias. El paso a paso
-está en [`mcp_gmail/README.md`](procesador-documentos/mcp_gmail/README.md).
-Nunca se versionan: `credentials/` está en el `.gitignore` y en el `deny` de
-`.claude/settings.json`.
+Ya está registrado en `.mcp.json`, así que Claude Code lo levanta al abrir el
+proyecto. Con `/mcp` se comprueba que está conectado.
+
+Para usarlo hacen falta **credenciales propias** de Google Cloud: habilitar la
+API, configurar la pantalla de consentimiento y crear un cliente OAuth de
+escritorio. El paso a paso, con las pantallas actuales de la consola, está en
+[`mcp_gmail/README.md`](procesador-documentos/mcp_gmail/README.md).
+
+Esas credenciales no se versionan nunca: `credentials/` está en el
+`.gitignore` **y** en el `deny` de `.claude/settings.json`.
 
 ---
 
