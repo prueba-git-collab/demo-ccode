@@ -1,0 +1,65 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/validar-salida.sh",
+            "type": "command"
+          },
+          {
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/validar-completo.sh",
+            "type": "command"
+          },
+          {
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/trazar.sh",
+            "type": "command"
+          }
+        ],
+        "matcher": "Write|Edit"
+      },
+      {
+        "hooks": [
+          {
+            "command": "if [[ \"$CLAUDE_TOOL_FILE_PATH\" == *.py ]]; then black \"$CLAUDE_TOOL_FILE_PATH\" 2\u003e/dev/null || true; fi",
+            "type": "command"
+          }
+        ],
+        "matcher": "Edit"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/proteger-datos.sh",
+            "type": "command"
+          }
+        ],
+        "matcher": "Write"
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Read(src/**)",
+      "Edit(src/**)",
+      "Write(src/**)",
+      "Read(tests/**)",
+      "Edit(tests/**)",
+      "Write(tests/**)",
+      "Read(data/**)",
+      "Bash(.venv/bin/python src/*)",
+      "Bash(.venv/bin/python -m pytest*)",
+      "Bash(python src/*)"
+    ],
+    "defaultMode": "default",
+    "deny": [
+      "Read(**/.env*)",
+      "Read(**/secrets/**)",
+      "Read(**/*.pem)",
+      "Write(**/.env*)",
+      "Edit(**/.env*)"
+    ]
+  }
+}

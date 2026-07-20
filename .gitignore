@@ -1,0 +1,22 @@
+# Credenciales del MCP de Gmail: nunca al repo
+credentials/
+token.json
+credentials.json
+
+# Entorno
+.venv/
+__pycache__/
+*.pyc
+
+# Los datos de entrada SI se versionan: son inventados (los IBAN y DNI que
+# aparecen no corresponden a nadie) y permiten clonar el repo y ejecutarlo.
+# Las salidas no: se regeneran al procesar.
+procesador-documentos/data/salida/*
+!procesador-documentos/data/salida/.gitkeep
+
+# Presentacion generada (el HTML se reconstruye desde slides.md)
+presentacion/slides.html
+
+# Sistema
+.DS_Store
+node_modules/

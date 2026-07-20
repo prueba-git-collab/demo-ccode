@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "gmail-facturas": {
+      "command": ".venv/bin/python",
+      "args": ["mcp_gmail/server.py"]
+    }
+  }
+}
