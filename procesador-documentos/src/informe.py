@@ -43,13 +43,27 @@ def main() -> None:
         if r["id"] in audit:
             r["anomalias"] = audit[r["id"]].get("anomalias", [])
 
+    # Agrupa por id: el duplicado duro (mismo movimiento en dos fuentes) comparte
+    # id, así que se muestra una vez citando todos sus ficheros.
+    grupos: dict[str, list] = {}
+    for r in base:
+        grupos.setdefault(r["id"], []).append(r)
+
+    # Los importes se suman una vez por movimiento, no por documento: un mismo
+    # movimiento visto en dos extractos no es dinero que entre dos veces. Los
+    # duplicados blandos tienen id distinto y sí suman: solo se avisa de ellos.
+    unicos = [rs[0] for rs in grupos.values()]
+    colapsados = len(base) - len(unicos)
+
     # Agregados
     por_fuente = defaultdict(int)
+    for r in base:
+        por_fuente[r["fuente"]] += 1
+
     total_gasto = Decimal("0")
     total_ingreso = Decimal("0")
     por_categoria: dict[str, list] = defaultdict(lambda: [0, Decimal("0")])
-    for r in base:
-        por_fuente[r["fuente"]] += 1
+    for r in unicos:
         imp = _dec(r["importe"])
         if imp < 0:
             total_gasto += imp
@@ -58,12 +72,6 @@ def main() -> None:
         cat = r["categoria"] or "Sin clasificar"
         por_categoria[cat][0] += 1
         por_categoria[cat][1] += imp
-
-    # Agrupa por id para no repetir el duplicado duro (mismo movimiento en dos
-    # fuentes comparte id): se muestra una vez, citando todos sus ficheros.
-    grupos: dict[str, list] = {}
-    for r in base:
-        grupos.setdefault(r["id"], []).append(r)
 
     # Redacción
     L = []
@@ -74,6 +82,15 @@ def main() -> None:
     L.append(f"- Total gastos: **{total_gasto:.2f} EUR**")
     L.append(f"- Total ingresos: **{total_ingreso:.2f} EUR**")
     L.append(f"- Saldo neto: **{(total_gasto + total_ingreso):.2f} EUR**")
+    if colapsados:
+        detalle = ", ".join(
+            f"{rs[0]['id']} ({_dec(rs[0]['importe']):.2f} EUR en "
+            + ", ".join(sorted({Path(r["origen"]).name for r in rs})) + ")"
+            for rs in grupos.values() if len(rs) > 1
+        )
+        L.append(f"- Movimientos contados una sola vez pese a aparecer en varias "
+                 f"fuentes: **{colapsados}** — {detalle}. Revisar manualmente si "
+                 f"se trata de operaciones distintas del mismo importe y fecha.")
 
     # Lo que no se pudo leer: se salta, pero se dice.
     descartes = _cargar("descartes.json")

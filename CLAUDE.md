@@ -64,16 +64,38 @@ Todo `data/salida/` es reconstruible: borrarlo entero es la forma de repetir.
 
 ## Hooks
 
-Configurados en `.claude/settings.json`, se disparan sobre `Write`/`Edit`:
+Configurados en `.claude/settings.json`:
 
-- `proteger-datos.sh` (PreToolUse) — **bloquea** la escritura si detecta IBAN o DNI
-  en claro. Es la regla que importa: los datos de entrada llevan PII sintética, pero
-  nada de eso puede acabar en `data/salida/` ni en los logs.
-- `validar-salida.sh` / `validar-completo.sh` — esquema de los artefactos y que
-  ningún registro quede sin procesar.
-- `trazar.sh` — traza en `data/salida/_proceso.log`.
+- `proteger-datos.sh` (PreToolUse, matcher `Write`) — **bloquea** la escritura en
+  `data/salida/` si el contenido lleva IBAN español o DNI en claro. Los datos de
+  entrada llevan PII sintética, pero nada de eso puede acabar en `data/salida/`
+  ni en los logs.
+- `validar-salida.sh` / `validar-completo.sh` (PostToolUse, `Write|Edit`) — esquema
+  de los artefactos y que ningún registro quede sin procesar.
+- `trazar.sh` (PostToolUse, `Write|Edit`) — traza en `data/salida/_proceso.log`.
 
 Requieren `jq` instalado. Sin él fallan en silencio y no se valida nada.
+
+### Alcance real de los hooks
+
+Los hooks interceptan **herramientas de Claude Code**, no escrituras en disco. De
+ahí dos límites que conviene tener presentes:
+
+- **Los scripts de Python no pasan por ningún hook.** `normalizar.py` e `informe.py`
+  se lanzan con `Bash` y escriben con `open()`: nunca invocan `Write`, así que
+  `proteger-datos.sh` no ve su contenido. Un `PreToolUse` sobre `Bash` tampoco
+  serviría, porque en ese momento el fichero aún no existe. Para esa vía la
+  protección vive en el código: `_redactar()` en `src/modelo.py` sanea `descripcion`
+  y `contraparte` dentro de `to_dict()`, que es el único punto por el que pasa todo
+  lo que se serializa.
+- **Lo que sí cubre `proteger-datos.sh`** son las escrituras propias y las de los
+  subagentes `clasificador` y `auditor`, que usan `Write` para sus artefactos. Es
+  la parte no determinista del pipeline, donde ninguna línea de código puede
+  garantizar que un modelo no transcriba un dato que ha leído.
+
+`_redactar()` cubre IBAN español (`ES` + 22 dígitos) y DNI (8 dígitos + letra). No
+cubre NIE, IBAN extranjero ni tarjetas: suficiente para el lote sintético de la
+demo, insuficiente para datos reales.
 
 ## MCP de Gmail
 

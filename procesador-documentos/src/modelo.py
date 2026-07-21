@@ -8,9 +8,25 @@ no se tocan.
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
+
+_IBAN = re.compile(r"\bES\d{22}\b", re.IGNORECASE)
+_DNI = re.compile(r"\b(?:DNI\s+)?(\d{8}[A-Za-z])\b", re.IGNORECASE)
+
+
+def _redactar(texto: str | None) -> str | None:
+    """Sustituye IBAN y DNI por una referencia parcial.
+
+    Se aplica solo al serializar: el valor crudo sigue en memoria para que `id`
+    mantenga la misma huella y los duplicados se sigan detectando.
+    """
+    if not texto:
+        return texto
+    texto = _IBAN.sub(lambda m: f"cuenta terminada en {m.group(0)[-4:]}", texto)
+    return _DNI.sub(lambda m: f"DNI terminado en {m.group(1)[-4:]}", texto)
 
 
 @dataclass
@@ -49,10 +65,10 @@ class Registro:
             "id": self.id,
             "fuente": self.fuente,
             "fecha": self.fecha.isoformat() if self.fecha else None,
-            "descripcion": self.descripcion,
+            "descripcion": _redactar(self.descripcion),
             "importe": f"{self.importe:.2f}" if self.importe is not None else None,
             "moneda": self.moneda,
-            "contraparte": self.contraparte,
+            "contraparte": _redactar(self.contraparte),
             "categoria": self.categoria,
             "explicacion": self.explicacion,
             "anomalias": self.anomalias,
