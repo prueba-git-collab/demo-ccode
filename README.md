@@ -86,9 +86,40 @@ python3 -m venv .venv
 Los scripts se ejecutan **siempre** con `.venv/bin/python`: el `python` del
 sistema no tiene estas librerías.
 
+Comprobar que quedó bien:
+
+```bash
+.venv/bin/python -c "import fastmcp, pypdf, google.oauth2; print('ok')"
+```
+
+### Autenticar contra Gmail
+
+Con `credentials/credentials.json` ya en su sitio, autorizar el acceso al buzón
+una sola vez. Abre el navegador y deja escrito `credentials/token.json`:
+
+```bash
+.venv/bin/python -c "
+import sys; sys.path.insert(0, 'mcp_gmail')
+import server; print(server._servicio())
+"
+```
+
+Hacerlo antes de la sesión: si no, el navegador se abre en mitad del primer
+`traer_facturas`.
+
 ### Ejecutarlo
 
-Son dos pasos, ambos desde Claude Code abierto en la carpeta del proyecto.
+Abrir Claude Code **en `procesador-documentos/`**, no en la raíz del repo:
+
+```bash
+cd procesador-documentos
+claude
+```
+
+La primera vez pregunta si confiar en los servidores MCP del `.mcp.json`:
+aceptar. Con `/mcp`, `gmail-facturas` tiene que salir conectado.
+
+A partir de ahí, dos pasos.
 
 **1. Traer los documentos del correo.** En lenguaje natural, sin comandos:
 

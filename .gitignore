@@ -17,6 +17,12 @@ procesador-documentos/data/salida/*
 # Presentacion generada (el HTML se reconstruye desde slides.md)
 presentacion/slides.html
 
+# Chuleta de montaje: contiene correos y detalles del entorno propio
+NOTAS-INSTALACION.md
+
 # Sistema
 .DS_Store
 node_modules/
+
+# Metadatos que WSL crea al copiar ficheros desde Windows
+*:Zone.Identifier
