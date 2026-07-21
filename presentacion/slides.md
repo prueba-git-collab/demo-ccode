@@ -472,6 +472,25 @@ Cuándo NO: para todo. Si es una pregunta, pregúntala y ya.
 
 ---
 
+# Cada subagente, con su modelo
+
+El frontmatter admite `model`: la tarea acotada no pide el modelo caro.
+
+```yaml
+---
+name: clasificador
+tools: Read, Write
+model: sonnet
+---
+```
+
+Sin `model`, hereda el de la sesión. Clasificar y auditar es trabajo acotado
+y con criterio ya escrito: Sonnet cumple y sale más barato.
+
+El criterio: reservar el modelo grande para lo que razona de verdad.
+
+---
+
 # Skills
 
 - Un `SKILL.md` + ficheros de apoyo (plantillas, scripts).
